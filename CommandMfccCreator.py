@@ -1,6 +1,6 @@
 import os
 import threading
-from queue import Queue
+import queue
 import librosa
 
 from CommandMfcc import CommandMfcc
@@ -9,8 +9,8 @@ from CommandMfcc import CommandMfcc
 class CommandMfccCreator:
 	def __init__(self, learning_database_rootdir_path, test_database_rootdir_path):
 		self.threads_number = 4
-		self.results_queue = Queue()
-		self.task_queue = Queue()
+		self.results_queue = queue.Queue()
+		self.task_queue = queue.Queue()
 		self.learning_database_rootdir_path = learning_database_rootdir_path + '/'
 		self.test_database_rootdir_path = test_database_rootdir_path + '/'
 		self.category_list_dir = os.listdir(self.learning_database_rootdir_path)
@@ -30,7 +30,7 @@ class CommandMfccCreator:
 				name, path, output_queue = req
 				try:
 					temp = CommandMfccCreator.record_to_command_mfcc(name, path)
-					print("Threat id:" + str(self.i) + " " + str(path))
+					print("Threat id:" + str(self.i) + " Transformed to mfcc: " + str(path))
 					output_queue.put(temp)
 					self.task_queue.task_done()
 				except:
@@ -51,7 +51,7 @@ class CommandMfccCreator:
 			file_list_dir = os.listdir(self.learning_database_rootdir_path + self.category_list_dir[i])
 			for j in range(len(file_list_dir)):
 				load_file_path = (
-				self.learning_database_rootdir_path + self.category_list_dir[i] + '/' + file_list_dir[j])
+					self.learning_database_rootdir_path + self.category_list_dir[i] + '/' + file_list_dir[j])
 				self.task_queue.put((self.category_list_dir[i], load_file_path, self.results_queue))
 		for _ in range(self.threads_number):
 			self.task_queue.put(None)
@@ -75,7 +75,7 @@ class CommandMfccCreator:
 			load_file_path = (self.test_database_rootdir_path + file_list_dir[i])
 			try:
 				temp = self.record_to_command_mfcc(file_list_dir[i], load_file_path)
-				print(str(load_file_path))
+				print( "Transformed to mfcc:" + str(load_file_path))
 			except:
 				print("Unable to load record: " + str(load_file_path))
 				temp = CommandMfcc(str(i), None)
