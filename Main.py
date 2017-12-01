@@ -1,44 +1,24 @@
 import csv
 
+import sys
+
 from CommandMfccCreator import CommandMfccCreator
-import datetime
-import librosa
-
-mindist = 3700
+from CommandRecognitor import CommandRecognitor
 
 
-def wyszukiwanie_podobienstwa2(mfcc_list, mfcc_test):
-	dyst = list()
-	for i in range(0, len(mfcc_list)):
-		y = mfcc_list[i].mfcc  # odwolanie do bazy danych
-		D, wp = librosa.dtw(mfcc_test, y, subseq=True)
-		# print(D[mfcc_test[1].size - 1, y[1].size - 1], self.name[i])
-		dyst.append(D[- 1, - 1])
-		# if D[- 1, - 1] < 3000:
-		# print(self.name[i], "dystans: ", D[- 1, - 1])
-	print("minimalna odleglosc to:", min(dyst))
-	if min(dyst) > mindist:
-		return "nie rozpoznano"
-	else:
-		return mfcc_list[dyst.index(min(dyst))].name
 
-
-LEARNING_DATABASE_ROOTDIR_PATH = "/home/dominik/Pobrane/bazy/database"
-TEST_DATABASE_ROOTDIR_PATH = "/home/dominik/Pobrane/bazy/test"
-print(str(datetime.datetime.now()))
+LEARNING_DATABASE_ROOTDIR_PATH = sys.argv[1]
+TEST_DATABASE_ROOTDIR_PATH = sys.argv[2]
 command_mfcc_builder = CommandMfccCreator(LEARNING_DATABASE_ROOTDIR_PATH, TEST_DATABASE_ROOTDIR_PATH)
-lista_data = command_mfcc_builder.get_list_of_learning_records()
-lista_test = command_mfcc_builder.get_list_of_testing_records()
-print(str(datetime.datetime.now()))
-
-with open('ttest.csv', "w") as f:
+list_learning_records_mfcc = command_mfcc_builder.get_list_of_learning_records()
+list_test_records_mfcc = command_mfcc_builder.get_list_of_testing_records()
+command_recognitor = CommandRecognitor(list_learning_records_mfcc)
+with open('275635.csv', "w") as f:
 	writer = csv.writer(f)
 
-for l in range(0, len(lista_test)):
-	wynik = wyszukiwanie_podobienstwa2(lista_data, lista_test[l].mfcc)
-	print("wynik pomiaru", lista_test[l].name, "to", wynik)
-	with open('ttest.csv', "a") as f:
+for l in range(0, len(list_test_records_mfcc)):
+	result = command_recognitor.compare_test_record_2_learning_list(list_test_records_mfcc[l].mfcc)
+	print("Record ", list_test_records_mfcc[l].name, " recognized as", result)
+	with open('275635.csv', "a") as f:
 		writer = csv.writer(f, delimiter=' ', lineterminator='\n')
-		writer.writerow(wynik)
-
-print(str(datetime.datetime.now()))
+		writer.writerow(result)
